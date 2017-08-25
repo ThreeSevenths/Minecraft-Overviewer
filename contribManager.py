@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # The contrib manager is used to help control the contribs script 
 # that are shipped with overviewer in Windows packages
@@ -21,6 +21,10 @@ scripts=dict( # keys are names, values are scripts
         rerenderBlocks  = "rerenderBlocks.py",
         testRender      = "testRender.py",
         validate        = "validateRegionFile.py",
+        pngit           = "png-it.py",
+        gallery         = "gallery.py",
+        regionTrimmer   = "regionTrimmer.py",
+        contributors    = "contributors.py"
         )
 
 # you can symlink or hardlink contribManager.py to another name to have it

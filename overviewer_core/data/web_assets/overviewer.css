@@ -25,7 +25,7 @@ body {
 .infoWindow>img {
     width:80px;
     float: left;
-
+    image-rendering: -moz-crisp-edges;
 }
 
 .infoWindow>p {
@@ -38,6 +38,17 @@ body {
     height: 15px;
     color: black;
     font-family: Arial, sans-serif;
+}
+
+.customControl > select {
+    font-size: 12px;
+    line-height: 160%;
+    text-align: center;
+
+    border: 1px solid #A9BBDF;
+    border-radius: 2px 2px;
+    box-shadow: rgba(0, 0, 0, 0.347656) 2px 2px 3px;
+
 }
 
 .customControl > div.top {
@@ -86,7 +97,7 @@ body {
 }
 
 
-#link, #coordsDiv {
+#link, #coordsDiv, #progressDiv {
     background-color: #fff; /* fallback */
     background-color: rgba(255,255,255,0.55);
     border: 1px solid rgb(0, 0, 0);

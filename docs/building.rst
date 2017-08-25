@@ -36,29 +36,34 @@ Windows Build Instructions
 --------------------------
 
 First, you'll need a compiler.  You can either use Visual Studio, or
-cygwin/mingw. The free `Visual Studio Express
-<http://www.microsoft.com/express/Windows/>`_ is okay. You will want the C++
-version (Microsoft® Visual C++® 2010 Express).  Note that the Express version of
-Visual Studio will only build 32-bit executables.  We currently don't have a
-recommended way of building Overviewer on 64-bit Windows using free tools.  If you
-have bought a copy of Visual Studio, you can use it for 64-bit builds.
+cygwin/mingw. The free `Visual Studio Community
+<https://www.visualstudio.com/vs/community/>`_ is okay. You will need to select the "Desktop Development with C++" WORKLOAD. Microsoft has been changing up the names on this with the "Community" edition of Visual Studio. If nothing else works, just install every Individual Visual C++ component you can find :)
 
 
-Prerequisits
-~~~~~~~~~~~~
+Prerequisites
+~~~~~~~~~~~~~
 
-You will need a copy of the `PIL sources <http://www.pythonware.com/products/pil/>`_.
+You will need the following:
+
+- `Python 2.7 <https://www.python.org/downloads/windows/>`_
+- A copy of the `Pillow sources <https://github.com/python-pillow/Pillow>`_.
+- The Pillow Extension for Python.
+- The Numpy Extension for Python.
+- The extensions can be installed via::
+
+    c:\python27\python.exe -m pip -U numpy pillow
+
 
 Building with Visual Studio
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Get the latest Overviewer source code as per above.
-2. From the Start menu, navigate to the 'Microsoft Visual Studio 2010 Express' and open the 'Visual Studio Command Prompt (2010)' shortcut.
+2. From the Start menu, navigate to 'Visual Studio 2017' and open the **'Developer Command Prompt for VS 2017'** (*or whatever year*) shortcut. A regular command or powershell prompt will *NOT* work for this.
 3. cd to the folder containing the Overviewer source code.
-4. Copy Imaging.h and ImPlatform.h from your PIL installation into the current working directory.
+4. Copy Imaging.h and ImPlatform.h from your Pillow sources into the current working directory.
 5. First try a build::
 
-    c:\python26\python setup.py build
+    c:\python27\python setup.py build
 
 If you encounter the following errors::
 
@@ -68,48 +73,90 @@ then try the following::
 
     set DISTUTILS_USE_SDK=1
     set MSSdk=1
-    c:\python26\python setup.py build
+    c:\python27\python setup.py build
 
 If the build was successful, there should be a c_overviewer.pyd file in your current working directory.
+
+Building with mingw-w64 and msys2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the recommended way to build on Windows without MSVC.
+
+1. Install msys2 by following **all** the instructions on 
+   `the msys2 installation page <https://msys2.github.io/>`_.
+
+2. Install the dependencies::
+
+    pacman -S git mingw-w64-x86_64-python2-numpy mingw-w64-x86_64-python2-Pillow mingw-w64-x86_64-python2 mingw-w64-x86_64-toolchain
+
+3. Clone the Minecraft-Overviewer git repository::
+
+    git clone https://github.com/overviewer/Minecraft-Overviewer.git
+
+   The source code will be downloaded to your msys2 home directory, e.g.
+   ``C:\msys2\home\Potato\Minecraft-Overviewer``
+
+4. Close the msys2 shell. Instead, open the MinGW64 shell.
+
+5. Build the Overviewer by changing your current working directory into the source
+   directory and executing the build script::
+
+    cd Minecraft-Overviewer
+    python2 setup.py build
+
+After it finishes, you should now be able to execute ``overviewer.py`` from the MINGW64
+shell.
 
 Building with mingw
 ~~~~~~~~~~~~~~~~~~~
 
 1. Open a MinGW shell.
 2. cd to the Overviewer directory.
-3. Copy Imaging.h and ImPlatform.h from your PIL installation into the current working directory.
+3. Copy Imaging.h and ImPlatform.h from your Pillow sources into the current working directory.
 4. Build::
 
     python setup.py build --compiler=mingw32
+    
+If the build fails with complaints about ``-mno-cygwin``, open the file ``Lib/distutils/cygwincompiler.py``
+in an editor of your choice, and remove all mentions of ``-mno-cygwin``. This is a bug in distutils,
+filed as `Issue 12641 <http://bugs.python.org/issue12641>`_. 
 
 
 Linux
 -----
 
 You will need the gcc compiler and a working build environment. On Ubuntu and
-Debian, this can be done by installing the ``build-essential`` package. For
-CentOS machines, see the :ref:`centos` section below
+Debian, this can be done by installing the ``build-essential`` package.
 
 You will need the following packages (at least):
 
-* python-imaging (for PIL)
+* python-imaging or python-pillow
+* python-imaging-dev or python-pillow-dev
 * python-dev
 * python-numpy
 
 Then to build::
 
-    python setup.py build
+    python2 setup.py build
+    
+At this point, you can run ``./overviewer.py`` from the current directory, so to run it you'll have to be in this directory and run ``./overviewer.py`` or provide the the full path to ``overviewer.py``.  Another option would be to add this directory to your ``$PATH``.   Note that there is a ``python2 setup.py install`` step that you can run which will install things into ``/usr/local/bin``, but this is strongly not recommended as it might conflict with other installs of Overviewer.
 
 OSX
 ---
 
-1. Download the source code for PIL from http://www.pythonware.com/products/pil/
-2. Compile the PIL code (``python ./setup.py build``)
-3. Install PIL (``sudo python ./setup.py install``)
-4. Find the path to libImaging in the PIL source tree
-5. Build Minecraft Overviewer with the path from step 3 as the value for C_INCLUDE_PATH::
+.. note::
 
-    C_INCLUDE_PATH="path from step 3" python ./setup.py build
+    You will need to have XCode and the XCode Command Line Tools installed (the
+    Command Line Tools can be installed by going to the Downloads tab under the
+    Xcode Preferences dialog).
+
+1. Download the source code for PIL from http://www.pythonware.com/products/pil/
+2. Compile the PIL code (``python2 ./setup.py build``)
+3. Install PIL (``sudo python2 ./setup.py install``)
+4. Find the path to the ``libImaging`` directory in the PIL source tree.
+5. Build Minecraft Overviewer with the path from step 4 as the value for PIL_INCLUDE_DIR::
+
+    PIL_INCLUDE_DIR="path from step 4" python2 ./setup.py build
 
 The following script (copied into your MCO source directory) should handle everything for you:
 
@@ -118,7 +165,7 @@ The following script (copied into your MCO source directory) should handle every
     #!/bin/bash
 
     # start with a clean place to work
-    python ./setup.py clean
+    python2 ./setup.py clean
 
     # get PIL
     if [ ! -d "`pwd`/Imaging-1.1.7/libImaging" ]; then
@@ -128,47 +175,15 @@ The following script (copied into your MCO source directory) should handle every
     fi
 
     # build MCO
-    C_INCLUDE_PATH="`pwd`/Imaging-1.1.7/libImaging" python ./setup.py build
+    PIL_INCLUDE_DIR="`pwd`/Imaging-1.1.7/libImaging" python2 ./setup.py build
 
-.. _centos:
+FreeBSD
+-------
+FreeBSD is similar to OSX and Linux, but ensure you're using Python 2.7. The port of Python 2.6 has bugs with threading under FreeBSD.
+Everything else you should need is ported, in particular math/py-numpy and graphics/py-imaging.
 
-CentOS
-------
-Since CentOS has an older version of Python (2.4), there are some difficulties
-in getting the Overviewer to work. Follow these steps which have been reported
-to work.
+You may need or want to add the line::
 
-Note: commands prefixed with a "#" mean to run as root, and "$" mean to run as a
-regular user.
+    PYTHON_VERSION=2.7
 
-1. Install the `EPEL repo <http://fedoraproject.org/wiki/EPEL>`_. Go to step #2 if you already have the EPEL repo installed.
-
-  1. ``$ wget http://download.fedoraproject.org/pub/epel/5/i386/epel-release-5-4.noarch.rpm``
-  2. ``# rpm -Uhv epel-release-5-4.noarch.rpm``
-
-2. Install the python26 packages and build dependancies
-
-  1. ``# yum install -y python26{,-imaging,-numpy}{,-devel} gcc``
-
-3. Install and setup Overviewer
-
-  1. ``$ git clone git://github.com/overviewer/Minecraft-Overviewer.git``
-  2. ``$ cd Minecraft-Overviewer``
-  3. ``$ python26 setup.py build``
-  4. Change the first line of overviewer.py from ``#!/usr/bin/env python`` to ``#!/usr/bin/env python26`` so that the Python 2.6 interpreter is used instead of the default 2.4
-
-4. Run Overviewer as usual
-
-  1. ``$ ./overviewer.py path/to/world/ path/to/output/`` or ``$ python26 path/to/overviewer.py path/to/world/ path/to/output/``
-  2. Proceed to the :doc:`Running <running>` instructions for more info.
-
-
-Installing the Compiled Code
-----------------------------
-
-You can run the ``overviewer.py`` script from the build directory just fine;
-installation is unnecessary. If you'd like to install, run
-
-::
-
-    python setup.py install
+to the file /etc/make.conf, but read the ports documentation to be sure of what this might do to other Python applications on your system.  

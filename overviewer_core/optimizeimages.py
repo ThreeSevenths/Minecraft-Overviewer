@@ -15,38 +15,206 @@
 
 import os
 import subprocess
-import shlex
 
-pngcrush = "pngcrush"
-optipng = "optipng"
-advdef = "advdef"
 
-def check_programs(level):
-    path = os.environ.get("PATH").split(os.pathsep)
-    
-    def exists_in_path(prog):
-        result = filter(lambda x: os.path.exists(os.path.join(x, prog)), path)
-        return len(result) != 0
-    
-    for prog,l in [(pngcrush,1), (advdef,2)]:
-        if l <= level:
-            if (not exists_in_path(prog)) and (not exists_in_path(prog + ".exe")):
-                raise Exception("Optimization prog %s for level %d not found!" % (prog, l))
+class Optimizer:
+    binaryname = ""
+    binarynames = []
 
-def optimize_image(imgpath, imgformat, optimizeimg):
-    if imgformat == 'png':
-        if optimizeimg >= 1:
-            # we can't do an atomic replace here because windows is terrible
-            # so instead, we make temp files, delete the old ones, and rename
-            # the temp files. go windows!
-            subprocess.Popen([pngcrush, imgpath, imgpath + ".tmp"],
-                stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
-            os.remove(imgpath)
-            os.rename(imgpath+".tmp", imgpath)
+    def __init__(self):
+        raise NotImplementedError("I can't let you do that, Dave.")
 
-        if optimizeimg >= 2:
-            # the "-nc" it's needed to no broke the transparency of tiles
-            recompress_option = "-z2" if optimizeimg == 2 else "-z4"
-            subprocess.Popen([advdef, recompress_option,imgpath], stderr=subprocess.STDOUT,
-                stdout=subprocess.PIPE).communicate()[0]
+    def optimize(self, img):
+        raise NotImplementedError("I can't let you do that, Dave.")
 
+    def fire_and_forget(self, args):
+        subprocess.check_call(args)
+
+    def check_availability(self):
+        path = os.environ.get("PATH").split(os.pathsep)
+
+        def exists_in_path(prog):
+            result = filter(lambda x: os.path.exists(os.path.join(x, prog)),
+                            path)
+            return len(result) != 0
+
+        binaries = self.binarynames + [x + ".exe" for x in self.binarynames]
+        for b in binaries:
+            if (exists_in_path(b)):
+                self.binaryname = b
+                break
+        else:
+            raise Exception("Optimization programs '%s' were not found!" %
+                            binaries)
+
+    def is_crusher(self):
+        """Should return True if the optimization is lossless, i.e. none of the
+        actual image data will be changed."""
+        raise NotImplementedError("I'm so abstract I can't even say whether "
+                                  "I'm a crusher.")
+
+
+class NonAtomicOptimizer(Optimizer):
+    def cleanup(self, img):
+        os.remove(img)
+        os.rename(img + ".tmp", img)
+
+    def fire_and_forget(self, args, img):
+        subprocess.check_call(args)
+        self.cleanup(img)
+
+
+class PNGOptimizer:
+    def __init__(self):
+        raise NotImplementedError("I can't let you do that, Dave.")
+
+
+class JPEGOptimizer:
+    def __init__(self):
+        raise NotImplementedError("I can't let you do that, Dave.")
+
+
+class pngnq(NonAtomicOptimizer, PNGOptimizer):
+    binarynames = ["pngnq-s9", "pngnq"]
+
+    def __init__(self, sampling=3, dither="n"):
+        if sampling < 1 or sampling > 10:
+            raise Exception("Invalid sampling value '%d' for pngnq!" %
+                            sampling)
+        if dither not in ["n", "f"]:
+            raise Exception("Invalid dither method '%s' for pngnq!" % dither)
+        self.sampling = sampling
+        self.dither = dither
+
+    def optimize(self, img):
+        if img.endswith(".tmp"):
+            extension = ".tmp"
+        else:
+            extension = ".png.tmp"
+
+        args = [self.binaryname, "-s", str(self.sampling), "-f", "-e",
+                extension, img]
+        # Workaround for poopbuntu 12.04 which ships an old broken pngnq
+        if self.dither != "n":
+            args.insert(1, "-Q")
+            args.insert(2, self.dither)
+
+        NonAtomicOptimizer.fire_and_forget(self, args, img)
+
+    def is_crusher(self):
+        return False
+
+
+class pngcrush(NonAtomicOptimizer, PNGOptimizer):
+    binarynames = ["pngcrush"]
+
+    # really can't be bothered to add some interface for all
+    # the pngcrush options, it sucks anyway
+    def __init__(self, brute=False):
+        self.brute = brute
+
+    def optimize(self, img):
+        args = [self.binaryname, img, img + ".tmp"]
+        if self.brute:  # Was the user an idiot?
+            args.insert(1, "-brute")
+
+        NonAtomicOptimizer.fire_and_forget(self, args, img)
+
+    def is_crusher(self):
+        return True
+
+
+class optipng(Optimizer, PNGOptimizer):
+    binarynames = ["optipng"]
+
+    def __init__(self, olevel=2):
+        self.olevel = olevel
+
+    def optimize(self, img):
+        Optimizer.fire_and_forget(self, [self.binaryname, "-o" +
+                                         str(self.olevel), "-quiet", img])
+
+    def is_crusher(self):
+        return True
+
+
+class advpng(Optimizer, PNGOptimizer):
+    binarynames = ["advpng"]
+    crusher = True
+
+    def __init__(self, olevel=3):
+        self.olevel = olevel
+
+    def optimize(self, img):
+        Optimizer.fire_and_forget(self, [self.binaryname, "-z" +
+                                         str(self.olevel), "-q", img])
+
+    def is_crusher(self):
+        return True
+
+
+class jpegoptim(Optimizer, JPEGOptimizer):
+    binarynames = ["jpegoptim"]
+    crusher = True
+    quality = None
+    target_size = None
+
+    def __init__(self, quality=None, target_size=None):
+        if quality is not None:
+            if quality < 0 or quality > 100:
+                raise Exception("Invalid target quality %d for jpegoptim" %
+                                quality)
+            self.quality = quality
+
+        if target_size is not None:
+            self.target_size = target_size
+
+    def optimize(self, img):
+        args = [self.binaryname, "-q", "-p"]
+        if self.quality is not None:
+            args.append("-m" + str(self.quality))
+
+        if self.target_size is not None:
+            args.append("-S" + str(self.target_size))
+
+        args.append(img)
+
+        Optimizer.fire_and_forget(self, args)
+
+    def is_crusher(self):
+        # Technically, optimisation is lossless if input image quality
+        # is below target quality, but this is irrelevant in this case
+        if (self.quality is not None) or (self.target_size is not None):
+            return False
+        else:
+            return True
+
+
+class oxipng(Optimizer, PNGOptimizer):
+    binarynames = ["oxipng"]
+
+    def __init__(self, olevel=2, threads=1):
+        if olevel > 6:
+            raise Exception("olevel should be between 0 and 6 inclusive")
+        if threads < 1:
+            raise Exception("threads needs to be at least 1")
+        self.olevel = olevel
+        self.threads = threads
+
+    def optimize(self, img):
+        Optimizer.fire_and_forget(self, [self.binaryname, "-o" +
+                                         str(self.olevel), "-q", "-t" +
+                                         str(self.threads), img])
+
+    def is_crusher(self):
+        return True
+
+
+def optimize_image(imgpath, imgformat, optimizers):
+        for opt in optimizers:
+            if imgformat == 'png':
+                if isinstance(opt, PNGOptimizer):
+                    opt.optimize(imgpath)
+            elif imgformat == 'jpg':
+                if isinstance(opt, JPEGOptimizer):
+                    opt.optimize(imgpath)

@@ -6,9 +6,14 @@
 The Minecraft Overviewer
 ========================
 
-See also the `Github Homepage`_
+See also the `Github Homepage`_ and the `Updates Blog`_, and follow us on
+our `Twitter account`_
 
 .. _Github Homepage: https://github.com/overviewer/Minecraft-Overviewer
+
+.. _Updates Blog: https://overviewer.org/blog/
+
+.. _Twitter account: https://twitter.com/mcoverviewer
 
 Introduction
 ============
@@ -16,17 +21,34 @@ The Minecraft Overviewer is a command-line tool for rendering high-resolution
 maps of Minecraft worlds. It generates a set of static html and image files and
 uses the Google Maps API to display a nice interactive map.
 
-The Overviewer has been in active development for over a year and has many
+The Overviewer has been in active development for several years and has many
 features, including day and night lighting, cave rendering, mineral overlays,
 and many plugins for even more features! It is written mostly in Python with
 critical sections in C as an extension module.
 
 For a simple example of what your renders will look like, head over to `The
-"Exmaple" Map <http://overviewer.org/example/>`_. For more user-contributed
+"Exmaple" Map <https://overviewer.org/example/>`_. For more user-contributed
 examples, see `The Example Wiki Page <https://github.com/overviewer/Minecraft-Overviewer/wiki/Map-examples>`_.
 
 .. image:: front_page_screenshot.png
     
+Documentation Contents
+======================
+
+.. toctree::
+   :maxdepth: 2
+
+   installing
+   building
+   running
+   config
+   signs
+   win_tut/windowsguide
+   faq
+   contributing
+   design/designdoc
+
+
 
 Features
 ========
@@ -34,11 +56,13 @@ Features
 * Renders high resolution images of your world, let's you "deep zoom" and see
   details!
 
-* Gloriously awesome smooth lighting is here! (use
-  :option:`--rendermodes=smooth-lighting <--rendermodes>`)
+* Gloriously awesome smooth lighting is here!
+  (:ref:`rendermode<option_rendermode>` name is ``smooth_lighting``)
 
 * Customizable textures! Pulls textures straight from your installed texture
   pack!
+
+* Choose from four rendering angles.
 
 * Generates a Google Maps powered map!
 
@@ -59,6 +83,10 @@ Features
 * Run The Overviewer from a command line or on a cron schedule for constantly
   updated maps! Run it for your Minecraft server world to provide your users
   with a detailed map!
+
+* Supports Nether and The End dimensions!
+
+* Built-in support for Biomes!
 
 What The Overviewer is not
 --------------------------
@@ -81,6 +109,8 @@ Full disclosure disclaimers of what The Overviewer is *not*.
   line based, you will need to know a bit about the command line in order to
   operate The Overviewer.
 
+* The Overviewer is not a potato.
+
 Requirements
 ============
 This is a quick list of what's required to run The Overviewer. It runs on
@@ -88,11 +118,11 @@ Windows, Mac, and Linux as long as you have these software packages installed:
 
 * Python 2.6 or 2.7 (we are *not* yet compatible with Python 3.x)
 
-* PIL (Python Imaging Library)
+* PIL (Python Imaging Library) or Pillow
 
 * Numpy
 
-* Either a Minecraft Client installed or a terrain.png for the textures.
+* Either a Minecraft Client installed or a textures/ folder for the textures (possibly from a texturepack)
 
 The first three are included in the Windows download. Also, there are additional
 requirements for compiling it (like a compiler). More details are available in
@@ -109,11 +139,17 @@ our `Github Homepage`_.
 packages and don't want to have to compile anything yourself**, head to the
 :doc:`installing` page.
 
+**Running Windows and not familiar with the command line?** Head to the
+:doc:`win_tut/windowsguide` page.
+
 **If you would like to build the Overviewer from source yourself (it's not that
 bad)**, head to the :doc:`Building <building>` page.
 
 **For all other platforms** you will need to build it yourself.
 :doc:`building`.
+
+**After you have The Overviewer built/installed** see :doc:`running` and
+:doc:`config`.
 
 .. _help:
 
@@ -132,20 +168,6 @@ If you think you've found a bug or other issue, file an issue on our `Issue
 Tracker <https://github.com/overviewer/Minecraft-Overviewer/issues>`_. Filing or
 commenting on an issue sends a notice to our IRC channel, so the response time
 is often very good!
-
-Documentation Contents
-======================
-
-.. toctree::
-   :maxdepth: 2
-
-   installing
-   building
-   running
-   options
-   faq
-   design/designdoc
-
 
 Indices and tables
 ==================
